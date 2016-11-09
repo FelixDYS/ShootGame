@@ -2,16 +2,20 @@
 using System.Collections;
 
 [RequireComponent(typeof(PlayerControll))]
-public class Player : MonoBehaviour
+[RequireComponent(typeof(GunControll))]
+public class Player : LivingEntity
 {
     public float moveSpeed = 5;
 
     Camera viewCamera;
     PlayerControll controller;
+    GunControll gunControll;
 
-    void Start()
+    protected override void Start()
     {
+        base.Start();
         controller = GetComponent<PlayerControll>();
+        gunControll = GetComponent<GunControll>();
         viewCamera = Camera.main;
     }
 
@@ -22,13 +26,22 @@ public class Player : MonoBehaviour
 
         controller.Move(moveVelocity);
 
+
         Ray ray = viewCamera.ScreenPointToRay(Input.mousePosition);
         Plane groundPlane = new Plane(Vector3.up, Vector3.zero);
         float rayDistance;
 
-        if (groundPlane.Raycast()
+        if (groundPlane.Raycast(ray, out rayDistance))
         {
-            
+            Vector3 point = ray.GetPoint(rayDistance);
+//            Debug.DrawLine(ray.origin, point, Color.red);
+            controller.LookAt(point);
+        }
+
+        if (Input.GetMouseButton(0))
+        {
+            gunControll.Shoot(); 
         }
     }
 }
+ 
