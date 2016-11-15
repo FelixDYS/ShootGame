@@ -12,37 +12,62 @@ public class Enemy : LivingEntity
     };
     State currentState;
     NavMeshAgent pathfinder;
-    Transform target;
-    float attackDistanceThreshold = 1.5f;
+	Transform target;
+	LivingEntity targetEntity;
+	Material skinMaterial;
+	Color originalColour;
+	
+	float attackDistanceThreshold = 0.5f;
     float timeBetweenAttacks = 1;
     float nextAttackTime;
     float myCollisionRadius;
     float targetCollisionRadius;
-
+	
+	bool hasTarget;
+	
     protected override void Start()
     {
         base.Start();
-        pathfinder = GetComponent<NavMeshAgent>();
-        currentState = State.Chasing;
-        target = (GameObject.FindGameObjectWithTag("Player")).transform;
+	    pathfinder = GetComponent<NavMeshAgent>();
+	    skinMaterial = GetComponent<Renderer>().material;
+	    originalColour = skinMaterial.color;
+	    
+	    if (GameObject.FindGameObjectWithTag("Player") != null)
+	    {
+	    	currentState = State.Chasing;
+		    hasTarget = true;
+		    target = (GameObject.FindGameObjectWithTag("Player")).transform;
+					    
+		    targetEntity = target.GetComponent<LivingEntity>();
+		    targetEntity.OnDeath += OnTargetDeath;
+		    
+		    myCollisionRadius = GetComponent<CapsuleCollider>().radius;
+		    targetCollisionRadius = target.GetComponent<CapsuleCollider>().radius;
+		    StartCoroutine(UpdatePath());
+	    }
 
-        myCollisionRadius = GetComponent<CapsuleCollider>().radius;
-        targetCollisionRadius = target.GetComponent<CapsuleCollider>().radius;
-        StartCoroutine(UpdatePath());
     }
+	
+	void OnTargetDeath()
+	{
+		hasTarget = false;
+		currentState = State.Idle;
+	}
 
     void Update()
-    {
-        if (Time.time > nextAttackTime)
-        {
-            float sqrDestToTartget = (target.position - transform.position).sqrMagnitude;
-            if (sqrDestToTartget < Mathf.Pow(attackDistanceThreshold, 2))
-            {
-                nextAttackTime = Time.time + timeBetweenAttacks;
-                //StartCoroutine(Attack());
-            }
-        }
-        
+	{
+		if (hasTarget)
+		{
+			if (Time.time > nextAttackTime)
+			{
+				float sqrDestToTartget = (target.position - transform.position).sqrMagnitude;
+				if (sqrDestToTartget < Mathf.Pow(attackDistanceThreshold + myCollisionRadius + targetCollisionRadius, 2))
+				{
+					nextAttackTime = Time.time + timeBetweenAttacks;
+					StartCoroutine(Attack());
+				}
+			}
+		}
     }
 
     IEnumerator Attack()
@@ -50,10 +75,14 @@ public class Enemy : LivingEntity
         currentState = State.Attacking;
         pathfinder.enabled = false;
         Vector3 originalPosition = transform.position;
-        Vector3 attackPosition = target.position;
-
+	    Vector3 dirToTarget = (target.position - transform.position).normalized;
+	    Vector3 attackPosition = target.position - dirToTarget * (myCollisionRadius);
+	    
         float attackSpeed = 3;
-        float percent = 0;
+	    float percent = 0;
+	    
+	    skinMaterial.color = Color.red;
+	    
         while (percent <= 1)
         {
             percent += Time.deltaTime * attackSpeed;
@@ -61,18 +90,20 @@ public class Enemy : LivingEntity
             transform.position = Vector3.Lerp(originalPosition, attackPosition, interpolatio);
             yield return null;
         }
+	    skinMaterial.color = originalColour;
         currentState = State.Chasing;
         pathfinder.enabled = true;
     }
+	
     IEnumerator UpdatePath()
     {
         float refreshRate = 0.25f;
-        while (target != null)
+	    while (hasTarget)
         {
             if (currentState == State.Chasing)
             {
                 Vector3 dirToTarget = (target.position - transform.position).normalized;
-                Vector3 targetPosition = target.position - dirToTarget * (myCollisionRadius + targetCollisionRadius);
+	            Vector3 targetPosition = target.position - dirToTarget * (myCollisionRadius + targetCollisionRadius + attackDistanceThreshold / 2f);
                 if (!dead)
                 {
                     pathfinder.SetDestination(targetPosition);
