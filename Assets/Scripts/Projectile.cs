@@ -40,5 +40,15 @@ public class Projectile : MonoBehaviour
         GameObject.Destroy(gameObject);
     }
 
-   
+    void OnHitObject(Collider c)
+    {
+        IDamageable damageableObject = c.GetComponent<IDamageable>();
+        if (damageableObject != null)
+        {
+            damageableObject.TakeDamage(damage);
+        }
+        GameObject.Destroy(gameObject);
+    }
+
+
 }
