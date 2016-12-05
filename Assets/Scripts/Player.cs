@@ -40,7 +40,12 @@ public class Player : LivingEntity
 
         if (Input.GetMouseButton(0))
         {
-            gunControll.Shoot(); 
+            gunControll.OnTriggerHold(); 
+        }
+
+        if (Input.GetMouseButtonUp(0))
+        {
+            gunControll.OnTriggerRelease();
         }
     }
 }
