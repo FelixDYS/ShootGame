@@ -32,7 +32,8 @@ public class Enemy : LivingEntity
     protected override void Start()
     {
         base.Start();
-	    pathfinder = GetComponent<UnityEngine.AI.NavMeshAgent>();
+	    
+        pathfinder = GetComponent<UnityEngine.AI.NavMeshAgent>();
 	    skinMaterial = GetComponent<Renderer>().material;
 	    originalColour = skinMaterial.color;
 	    

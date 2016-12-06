@@ -41,4 +41,11 @@ public class GunControll : MonoBehaviour
             equippedGun.OnTriggerRelease();
         }
     }
+    
+    public float GunHeight{
+        get
+        {
+            return weaponHold.position.y;
+        }
+    }
 }
