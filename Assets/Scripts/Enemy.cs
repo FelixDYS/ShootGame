@@ -29,14 +29,15 @@ public class Enemy : LivingEntity
 	
 	bool hasTarget;
 	
-    protected override void Start()
+    void Awake()
     {
-        base.Start();
-	    
         pathfinder = GetComponent<UnityEngine.AI.NavMeshAgent>();
 	    skinMaterial = GetComponent<Renderer>().material;
 	    originalColour = skinMaterial.color;
-	    
+    }
+    protected override void Start()
+    {
+        base.Start();
 	    if (GameObject.FindGameObjectWithTag("Player") != null)
 	    {
 	    	currentState = State.Chasing;
@@ -52,6 +53,19 @@ public class Enemy : LivingEntity
 	    }
 
     }
+    public void SetCharacteristics(float moveSpeed, int hitsToKillPlayer, float enemyHealth, Color skinColour)
+     {
+            pathfinder.speed = moveSpeed;
+
+            if (hasTarget) {
+                damage = Mathf.Ceil(targetEntity.startingHealth / hitsToKillPlayer);
+            }
+            startingHealth = enemyHealth;
+
+            skinMaterial = GetComponent<Renderer> ().material;
+            skinMaterial.color = skinColour;
+            originalColour = skinMaterial.color;
+        }
 
     public override void TakeHit(float damage, Vector3 hitPoint, Vector3 hitDirection)
     { 
